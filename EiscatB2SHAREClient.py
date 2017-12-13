@@ -121,10 +121,6 @@ def main():
         except Exception as e:
             logging.debug('consumer exception %s', e)
 
-    # refactor metadata_field_map
-    # refactor hdf5 metadata from consumer to eiscatb2shareclient
-    # update_draft takes in only ready metadata json produced by the metadata_field_map
-
 
 if __name__ == '__main__':
     main()
