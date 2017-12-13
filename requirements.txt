@@ -1,0 +1,4 @@
+requests
+jsonpatch
+datetime
+h5py
