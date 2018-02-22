@@ -27,6 +27,7 @@ from email.message import EmailMessage
 from urllib.parse import urlparse
 from datetime import datetime
 import configuration
+from os.path import basename
 
 logging.basicConfig(filename=configuration.log_file_path, level=configuration.logging_level)
 
@@ -69,12 +70,38 @@ class B2SHAREClient(object):
         r = requests.get(url, verify=self.cert_verify)
         return r.json() if (r.status_code == requests.codes.ok) else None
 
-    def create_draft(self):
-        return
+    def create_draft(self, json_object):
+        url = self.url + "/api/records/?access_token=" + self.token
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post(url, data=json_object, headers=headers)
+        if r.status_code == requests.codes.created:
+            return r.json()
+        else:
+            logging.warning('create_draft returned status code: %d', r.status_code)
+            return None
 
-    def put_draft_file(self):
-        return
+    def put_draft_file(self, draft, file_list):
+        headers = {'Accept': 'application/json', 'Content-Type': 'application/octet-stream'}
+        upload_info = []
 
+        if draft is None:
+            logging.warning('No draft')
+            return upload_info
+
+        for file_name in file_list:
+            with open(file_name, 'rb') as fid:
+                if 'files' in draft['links']:
+                    url = draft['links']['files'] + "/" + basename(file_name) + "?access_token=" + self.token
+                else:
+                    logging.warning('draft: %s, no files link, returning', draft['id'])
+                    return upload_info
+                r = requests.put(url, headers=headers, data=fid)
+                if r.status_code == requests.codes.ok:
+                    upload_info.append(r.json())
+                else:
+                    logging.warning('put_draft_file returned status code: %d', r.status_code)
+        return upload_info
+            
     def get_drafts(self):
         url = self.url + "/api/records/?q=community:" + self.community_id + "&drafts=1&q=publication_state:draft&access_token=" + self.token
         r = requests.get(url, verify=self.cert_verify)
@@ -154,12 +181,13 @@ class B2SHAREClient(object):
             return None
 
         url = self.url + "/api/records/" + draft['id'] + "/draft?access_token=" + self.token
-        # url = self.url + "/api/records/" + draft['id'] + "?access_token=" + self.token
-        headers = {'Content-Type': 'application/json-patch+json', 'Accept': 'application/json'}
+        headers = {'Content-Type': 'application/json-patch+json'}
 
+        print("the patch is: ")
+        print(json_patch)
+        
         r = requests.patch(url, data=json_patch, headers=headers, verify=self.cert_verify)
         if r.status_code == requests.codes.ok:
-            # return_url = self.url + "/records/" + draft['id'] + "/edit"
             return_url = self.url + "/records/" + draft['id']
             logging.debug('draft %s: return url: %s', draft['id'], return_url)
             return return_url
