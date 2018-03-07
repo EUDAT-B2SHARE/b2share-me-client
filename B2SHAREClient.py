@@ -73,7 +73,7 @@ class B2SHAREClient(object):
     def create_draft(self, json_object):
         url = self.url + "/api/records/?access_token=" + self.token
         headers = {'Content-Type': 'application/json'}
-        r = requests.post(url, data=json_object, headers=headers)
+        r = requests.post(url, data=json_object, headers=headers, verify=self.cert_verify)
         if r.status_code == requests.codes.created:
             return r.json()
         else:
@@ -95,7 +95,7 @@ class B2SHAREClient(object):
                 else:
                     logging.warning('draft: %s, no files link, returning', draft['id'])
                     return upload_info
-                r = requests.put(url, headers=headers, data=fid)
+                r = requests.put(url, headers=headers, verify=self.cert_verify, data=fid)
                 if r.status_code == requests.codes.ok:
                     upload_info.append(r.json())
                 else:
