@@ -182,9 +182,6 @@ class B2SHAREClient(object):
 
         url = self.url + "/api/records/" + draft['id'] + "/draft?access_token=" + self.token
         headers = {'Content-Type': 'application/json-patch+json'}
-
-        print("the patch is: ")
-        print(json_patch)
         
         r = requests.patch(url, data=json_patch, headers=headers, verify=self.cert_verify)
         if r.status_code == requests.codes.ok:
